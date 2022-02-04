@@ -3,24 +3,32 @@ package dto
 import (
 	"github.com/ashtishad/top-words/internal/lib"
 	"regexp"
+	"strings"
 )
 
 type TextRequestDto struct {
 	Text string `json:"text"`
 }
 
-func (dto *TextRequestDto) ValidateRequest() lib.RestErr {
+// ValidateRequest validates the TextRequestDto, returns list of words split by space
+// and returns error if input is empty, or contains non-alphanumeric characters or more than 10 million characters
+func (dto *TextRequestDto) ValidateRequest() ([]string, lib.RestErr) {
 	if dto.Text == "" {
-		return lib.NewBadRequestError("text cannot be empty")
+		return nil, lib.NewBadRequestError("text cannot be empty")
 	}
 
 	if len(dto.Text) > lib.MaxTextLength {
-		return lib.NewBadRequestError("text is too long, more than 10 million characters")
+		return nil, lib.NewBadRequestError("text is too long, more than 10 million characters")
 	}
 
-	if !regexp.MustCompile(`^[a-zA-Z0-9_]+$`).MatchString(dto.Text) {
-		return lib.NewBadRequestError("text contains invalid characters")
+	r := regexp.MustCompile(`[^a-zA-Z0-9\s]`)
+	if r.MatchString(dto.Text) {
+		return nil, lib.NewBadRequestError("text contains invalid characters")
 	}
 
-	return nil
+	dto.Text = strings.ToLower(dto.Text)
+	dto.Text = r.ReplaceAllString(dto.Text, " ")
+	words := strings.Split(dto.Text, " ")
+
+	return words, nil
 }
