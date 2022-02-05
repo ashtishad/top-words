@@ -25,8 +25,8 @@ type WordContainer struct {
 	topWords     []TopWord
 }
 
-// Init initializes the TopWordsService for use.
-func Init() TopWordsService {
+// init initializes/resets the TopWordsService for fresh use.
+func (c *WordContainer) init() TopWordsService {
 	m := make(map[string]int64)
 	s := make([]TopWord, 0)
 	return &WordContainer{
@@ -36,8 +36,10 @@ func Init() TopWordsService {
 }
 
 // GetTopTenWords returns the top ten words as response.
-// text request --> validate -> process words in chunks -> updates freq map -> map to top word slice -> sort -> return response dto
+// text request --> validate -> process words in chunks -> updates freq map -> map to top word slice -> sort slice -> return response dto
 func (c *WordContainer) GetTopTenWords(text dto.TextRequestDto) ([]dto.TopWordsResponseDto, lib.RestErr) {
+	c.init() // init or reset word container
+
 	words, err := text.ValidateRequest()
 	if err != nil {
 		return nil, err
@@ -48,9 +50,10 @@ func (c *WordContainer) GetTopTenWords(text dto.TextRequestDto) ([]dto.TopWordsR
 
 	for i := 0; i < workers; i++ {
 		c.wg.Add(1)
-		go c.processWords(words[i*wordChunks : (i+1)*wordChunks])
+		go c.processWords(words[i*wordChunks : (i+1)*wordChunks]) // process words in chunks, calls wg done when finished
 	}
 
+	c.wg.Wait()
 	c.mapToTopWordsSlice() // frequency map -> top words slice
 	c.sortTopTen()         // sort the slice from highest to lowest frequency
 
