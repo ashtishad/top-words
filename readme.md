@@ -6,7 +6,7 @@ A REST API built with go standard library that accepts large size of text(10 mil
 
 #### How to use it?
 
-* run the server from cmd directory with `go run main.go`.
+* run the server from root directory with `go run main.go`.
 * send a post request to `http://localhost:8080/topten` with `text` as a body.
 
 
