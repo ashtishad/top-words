@@ -1,8 +1,6 @@
 package api
 
 import (
-	"encoding/json"
-	"github.com/ashtishad/top-words/internal/dto"
 	"github.com/ashtishad/top-words/pkg/service"
 	"log"
 	"net/http"
@@ -18,9 +16,9 @@ func InitHandler(l *log.Logger) *TopTen {
 
 func (h *TopTen) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		h.l.Println("Handling post request on /top-ten")
 		h.serveTopTen(w, r)
 	} else {
+		h.l.Println("Invalid request method: ", r.Method, r.RequestURI)
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
@@ -29,36 +27,32 @@ func (h *TopTen) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *TopTen) serveTopTen(w http.ResponseWriter, r *http.Request) {
 	defer service.Init() // reset after use
 	h.l.Println("Endpoint hit: /top-ten")
+	w.Header().Set("Content-Type", "application/json")
 
 	// receive text from json request body
-	read := r.Body
-	defer read.Close()
+	data := r.Body
+	defer data.Close()
 
 	// create a new dto.TopTen object
-	var text dto.TextRequestDto
-	if err := json.NewDecoder(read).Decode(&text); err != nil {
-		h.l.Println("Error while decoding json")
-		http.Error(w, "Error while decoding json", http.StatusBadRequest)
-		return
-	}
+	text, err := service.FromJSON(data)
 
 	// send text to the top ten handler
-	c := service.Init() // reset for next use
+	c := service.Init()
 	resp, err := c.GetTopTenWords(text)
 	if err != nil {
-		h.l.Println("Error while getting top ten words")
-		http.Error(w, "Error while getting top ten words", http.StatusInternalServerError)
+		h.l.Println("Error while getting top ten words : ", err.AsMessage())
+		http.Error(w, err.AsMessage(), http.StatusInternalServerError)
 		return
 	}
 
 	h.l.Println(resp) // test
 
 	// send response to the client
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		h.l.Println("Error while encoding json")
-		http.Error(w, "Error while encoding json", http.StatusInternalServerError)
+
+	err = service.ToJSON(w, resp)
+	if err != nil {
+		h.l.Println("Error while sending response to json : ", err.AsMessage())
+		http.Error(w, err.AsMessage(), http.StatusInternalServerError)
 		return
 	}
 }
