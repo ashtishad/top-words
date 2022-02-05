@@ -14,12 +14,14 @@ const Port = ":8080"
 func Start() {
 
 	l := log.New(os.Stdout, "top-ten-api ", log.LstdFlags)
+
 	th := InitHandler(l)
 
 	// created http request multiplexer
 	mux := http.NewServeMux()
 
 	// register handlers with routes
+
 	mux.Handle("/topten", th)
 
 	// Server Config

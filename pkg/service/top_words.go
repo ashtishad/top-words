@@ -25,8 +25,8 @@ type WordContainer struct {
 	topWords     []TopWord
 }
 
-// init initializes/resets the TopWordsService for fresh use.
-func (c *WordContainer) init() TopWordsService {
+// Init initializes/resets the TopWordsService for fresh use.
+func Init() TopWordsService {
 	m := make(map[string]int64)
 	s := make([]TopWord, 0)
 	return &WordContainer{
@@ -38,7 +38,7 @@ func (c *WordContainer) init() TopWordsService {
 // GetTopTenWords returns the top ten words as response.
 // text request --> validate -> process words in chunks -> updates freq map -> map to top word slice -> sort slice -> return response dto
 func (c *WordContainer) GetTopTenWords(text dto.TextRequestDto) ([]dto.TopWordsResponseDto, lib.RestErr) {
-	c.init() // init or reset word container
+	Init() // init or reset word container
 
 	words, err := text.ValidateRequest()
 	if err != nil {
