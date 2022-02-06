@@ -6,19 +6,19 @@ import (
 	"sort"
 )
 
-// processWords processes the words in the given slice.
-func (c *WordContainer) processWords(words []string) {
-	defer c.wg.Done()
-
-	for _, word := range words {
-		c.mu.Lock()
+// pushToFrequencyMap updates the frequency map with the word and its frequency.
+func (c *WordContainer) pushToFrequencyMap(word string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.frequencyMap[word] > 0 {
 		c.frequencyMap[word]++
-		c.mu.Unlock()
+	} else {
+		c.frequencyMap[word] = 1
 	}
 }
 
-// mapToTopWordsSlice maps the word frequency to the top ten words.
-func (c *WordContainer) mapToTopWordsSlice() {
+// toTopWordsSlice maps the word frequency to the top ten words.
+func (c *WordContainer) toTopWordsSlice() {
 	for k, v := range c.frequencyMap {
 		c.topWords = append(c.topWords, TopWord{
 			word: k,
@@ -27,8 +27,8 @@ func (c *WordContainer) mapToTopWordsSlice() {
 	}
 }
 
-// sortTopTen sorts the top ten words in descending order.
-func (c *WordContainer) sortTopTen() {
+// sortWords sorts the top ten words in descending order.
+func (c *WordContainer) sortWords() {
 	sort.Slice(c.topWords, func(i, j int) bool {
 		return c.topWords[i].freq > c.topWords[j].freq
 	})
@@ -36,20 +36,36 @@ func (c *WordContainer) sortTopTen() {
 
 // makeTopTenResponseDTO creates the top ten response DTO.
 func (c *WordContainer) makeTopTenResponseDTO() []dto.TopWordsResponseDto {
-	resp := make([]dto.TopWordsResponseDto, 0, 10)
-	for _, w := range c.topWords {
-		resp = append(resp, dto.TopWordsResponseDto{
-			Word:      w.word,
-			Frequency: w.freq,
-		})
+	n := len(c.topWords)
+	if n > 10 {
+		n = 10
+	}
+	resp := make([]dto.TopWordsResponseDto, n)
+	for i := 0; i < n; i++ {
+		resp[i] = dto.TopWordsResponseDto{
+			Word:      c.topWords[i].word,
+			Frequency: c.topWords[i].freq,
+		}
 	}
 	return resp
 }
 
-// setGoMaxProcs sets the maximum number of CPUs that can be executing concurrently.
+// getMaxNumCPUs sets the maximum number of CPUs that can be executing concurrently.
 // returns the number, default is 1.
-func setGoMaxProcs() int {
+func getMaxNumCPUs() int {
 	n := runtime.NumCPU()
 	runtime.GOMAXPROCS(n)
 	return n
+}
+
+// calcChunks calculates the number of chunks to process by each worker.
+// total word chunks = total number of words / number of workers
+// if there is a remainder, add one more chunk to the last worker
+// Why? - to ensure that the last worker processes the remaining words.
+func calcChunks(words []string, workers int) int {
+	chunks := len(words) / workers
+	if len(words)%workers != 0 {
+		chunks++
+	}
+	return chunks
 }
