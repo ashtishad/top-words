@@ -1,6 +1,6 @@
-##Top-Ten-Words
+## Top Ten Words
 
-####What is it?
+#### What is it?
 
 A REST API built with go standard library that accepts large size of text(10 million chars), concurrently processes it and give json response of it's top ten words with frequency.
 
