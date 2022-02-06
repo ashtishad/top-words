@@ -21,10 +21,7 @@ func (dto *TextRequestDto) ValidateRequest() ([]string, lib.RestErr) {
 		return nil, lib.NewBadRequestError("text is too long, more than 10 million characters")
 	}
 
-	r := regexp.MustCompile(`[^a-zA-Z0-9\s]`)
-	if r.MatchString(dto.Text) {
-		return nil, lib.NewBadRequestError("text contains invalid characters")
-	}
+	r := regexp.MustCompile(`[^a-zA-Z\-'’]`)
 
 	dto.Text = strings.ToLower(dto.Text)
 	dto.Text = r.ReplaceAllString(dto.Text, " ")
