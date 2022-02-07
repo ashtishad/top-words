@@ -36,8 +36,6 @@ func Init() TopWordsService {
 // GetTopTenWords returns the top ten words as response.
 // text request --> validate -> process words in chunks -> updates freq map -> map to top word slice -> sort slice -> return response dto
 func (c *WordContainer) GetTopTenWords(text dto.TextRequestDto) ([]dto.TopWordsResponseDto, lib.RestErr) {
-	Init() // init or reset word container
-
 	words, err := text.ValidateRequest()
 	if err != nil {
 		return nil, err

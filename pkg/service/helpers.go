@@ -8,8 +8,10 @@ import (
 
 // pushToFrequencyMap updates the frequency map with the word and its frequency.
 func (c *WordContainer) pushToFrequencyMap(word string) {
+	// avoid concurrent map read and write
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
 	if c.frequencyMap[word] > 0 {
 		c.frequencyMap[word]++
 	} else {

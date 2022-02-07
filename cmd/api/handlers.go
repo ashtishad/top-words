@@ -25,7 +25,6 @@ func (h *TopTen) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // core handler to serve top ten words
 func (h *TopTen) serveTopTen(w http.ResponseWriter, r *http.Request) {
-	defer service.Init() // reset after use
 	h.l.Println("Endpoint hit: /top-ten")
 	w.Header().Set("Content-Type", "application/json")
 
@@ -45,10 +44,10 @@ func (h *TopTen) serveTopTen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.l.Println(resp) // test
+	// print the response for testing
+	h.l.Println("Top ten words: ", resp)
 
 	// send response to the client
-
 	err = service.ToJSON(w, resp)
 	if err != nil {
 		h.l.Println("Error while sending response to json : ", err.AsMessage())
