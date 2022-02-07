@@ -10,26 +10,29 @@ import (
 func (c *WordContainer) pushToFrequencyMap(word string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.frequencyMap[word] > 0 {
-		c.frequencyMap[word]++
+	if v, ok := c.frequencyMap.Get(word); ok {
+		c.frequencyMap.Set(word, v.(int)+1)
 	} else {
-		c.frequencyMap[word] = 1
+		c.frequencyMap.Set(word, 1)
 	}
 }
 
 // toTopWordsSlice maps the word frequency to the top ten words.
 func (c *WordContainer) toTopWordsSlice() {
-	for k, v := range c.frequencyMap {
-		c.topWords = append(c.topWords, TopWord{
-			word: k,
-			freq: v,
-		})
+	for pair := c.frequencyMap.Oldest(); pair != nil; pair = pair.Next() {
+		c.topWords = append(c.topWords, TopWord{word: pair.Key.(string), freq: pair.Value.(int)})
 	}
+	//for k, v := range c.frequencyMap {
+	//	c.topWords = append(c.topWords, TopWord{
+	//		word: k,
+	//		freq: v,
+	//	})
+	//}
 }
 
-// sortWords sorts the top ten words in descending order.
-func (c *WordContainer) sortWords() {
-	sort.Slice(c.topWords, func(i, j int) bool {
+// sortWordsStable sorts the top ten words in descending order.
+func (c *WordContainer) sortWordsStable() {
+	sort.SliceStable(c.topWords, func(i, j int) bool {
 		return c.topWords[i].freq > c.topWords[j].freq
 	})
 }

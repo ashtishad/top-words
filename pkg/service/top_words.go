@@ -3,6 +3,8 @@ package service
 import (
 	"github.com/ashtishad/top-words/internal/dto"
 	"github.com/ashtishad/top-words/internal/lib"
+	Map "github.com/ashtishad/top-words/pkg/ordered_map"
+	"log"
 	"sync"
 )
 
@@ -12,7 +14,7 @@ type TopWordsService interface {
 
 type TopWord struct {
 	word string
-	freq int64
+	freq int
 }
 
 // WordContainer has a slice of words and their frequencies,
@@ -21,23 +23,24 @@ type TopWord struct {
 type WordContainer struct {
 	mu           sync.Mutex
 	wg           sync.WaitGroup
-	frequencyMap map[string]int64
+	frequencyMap *Map.OrderedMap
 	topWords     []TopWord
 }
 
 // Init initializes/resets the TopWordsService for fresh use.
 func Init() TopWordsService {
-	m := make(map[string]int64)
+	s := make([]TopWord, 0)
+	m := Map.New()
+	//m := make(map[string]int64)
 	return &WordContainer{
 		frequencyMap: m,
+		topWords:     s,
 	}
 }
 
 // GetTopTenWords returns the top ten words as response.
 // text request --> validate -> process words in chunks -> updates freq map -> map to top word slice -> sort slice -> return response dto
 func (c *WordContainer) GetTopTenWords(text dto.TextRequestDto) ([]dto.TopWordsResponseDto, lib.RestErr) {
-	Init() // init or reset word container
-
 	words, err := text.ValidateRequest()
 	if err != nil {
 		return nil, err
@@ -70,7 +73,10 @@ func (c *WordContainer) GetTopTenWords(text dto.TextRequestDto) ([]dto.TopWordsR
 	c.wg.Wait()
 
 	c.toTopWordsSlice() // frequency map -> top words slice
-	c.sortWords()       // sort the slice from highest to lowest frequency
+	log.Printf("Frequency: %v", c.frequencyMap)
+	log.Println("----------------------------------------------------")
+	log.Printf("Top words: %v", c.topWords)
+	c.sortWordsStable() // sort the slice from highest to lowest frequency
 
 	resp := c.makeTopTenResponseDTO() // make top ten response dto, ready to return
 
