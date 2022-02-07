@@ -68,7 +68,7 @@ func (c *WordContainer) GetTopTenWords(text dto.TextRequestDto) ([]dto.TopWordsR
 	c.wg.Wait()
 
 	c.toTopWordsSlice() // frequency map -> top words slice
-	c.sortWords()       // sort the slice from highest to lowest frequency
+	c.sortWords()       // sort the slice from highest to lowest frequency,if frequency is same, sort alphabetically
 
 	resp := c.makeTopTenResponseDTO() // make top ten response dto, ready to return
 

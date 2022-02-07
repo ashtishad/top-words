@@ -29,9 +29,13 @@ func (c *WordContainer) toTopWordsSlice() {
 	}
 }
 
-// sortWords sorts the top ten words in descending order.
+// sortWords sorts the top ten words by frequency highest to lowest.
+// if frequency is same, sort by alphabetical order.
 func (c *WordContainer) sortWords() {
 	sort.Slice(c.topWords, func(i, j int) bool {
+		if c.topWords[i].freq == c.topWords[j].freq {
+			return c.topWords[i].word < c.topWords[j].word
+		}
 		return c.topWords[i].freq > c.topWords[j].freq
 	})
 }
