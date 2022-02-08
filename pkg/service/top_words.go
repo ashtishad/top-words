@@ -41,28 +41,24 @@ func (c *WordContainer) GetTopTenWords(text dto.TextRequestDto) ([]dto.TopWordsR
 		return nil, err
 	}
 
-	workers := getMaxNumCPUs()           // set max number of go routines to use process concurrently
-	chunks := calcChunks(words, workers) // calculate word chunks to process by each worker
+	workers := getMaxNumCPUs()                // set max number of go routines to use process concurrently
+	chunkSize := getChunkSize(words, workers) // calculate total words processed by each go routine(workers)
 
-	// single unit of work for each worker
-	processWord := func(words []string) {
-		for _, word := range words {
-			if word == "a" || len(word) >= 2 {
-				c.pushToFrequencyMap(word)
-			}
-		}
-		c.wg.Done()
-	}
+	c.wg.Add(workers)
 
-	// workers will process words concurrently
 	for i := 0; i < workers; i++ {
-		start := i * chunks
-		end := start + chunks
-		if end > len(words) {
-			end = len(words)
-		}
-		c.wg.Add(1)
-		go processWord(words[start:end])
+		// set which word chunk to be processed by individual worker
+		start, end := getChunkRange(chunkSize, i, len(words))
+
+		// launch a go routine to process the chunk
+		go func(words []string) {
+			defer c.wg.Done()
+			for _, word := range words {
+				if word == "a" || len(word) >= 2 {
+					c.pushToFrequencyMap(word)
+				}
+			}
+		}(words[start:end])
 	}
 
 	c.wg.Wait()

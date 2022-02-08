@@ -64,14 +64,24 @@ func getMaxNumCPUs() int {
 	return n
 }
 
-// calcChunks calculates the number of chunks to process by each worker.
+// getChunkSize calculates the number of chunks to process by each worker.
 // total word chunks = total number of words / number of workers
 // if there is a remainder, add one more chunk to the last worker
 // Why? - to ensure that the last worker processes the remaining words.
-func calcChunks(words []string, workers int) int {
+func getChunkSize(words []string, workers int) int {
 	chunks := len(words) / workers
 	if len(words)%workers != 0 {
 		chunks++
 	}
 	return chunks
+}
+
+// getChunkSize calculates the range of words to be processed by each go routine(worker)
+func getChunkRange(size int, i int, len int) (int, int) {
+	start := i * size
+	end := start + size
+	if end > len {
+		end = len
+	}
+	return start, end
 }
