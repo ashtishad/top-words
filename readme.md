@@ -26,6 +26,7 @@ Client --(JSON)-> REST Handlers --(DTO)-> Service --(DTO)-> REST Handlers --(JSO
 
 #### Few gotchas:
 
-* Text will be processed concurrently utilizing maximum number of cpu cores.
-* If GoMaxProcs is 4, then 4 concurrent goroutines(workers) will divide all words by chunks and will be executed concurrently.
-* Initially, concurrency concepts used so far, sync wait group,mutex lock unlock, goroutines.
+* If multiple result have same frequency, It will sort alphabetically, then select top ten.
+* Text will be processed concurrently utilizing maximum number of cpu cores, acquires mutex lock to ensure data intrigity.
+* If Available CPU core number is 4, then 4 concurrent goroutines(workers) will divide all words by chunks and will be executed concurrently.
+* Initially, concurrency concepts used so far, sync wait group, mutex lock unlock, goroutines.
